@@ -14,9 +14,10 @@ import {
   FormControl,
   InputLabel,
   Menu,
+  Chip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import FilterListIcon from '@mui/icons-material/FilterList'; // Import FilterListIcon
+import FilterListIcon from '@mui/icons-material/FilterList';
 import './App.css';
 
 function App() {
@@ -102,8 +103,11 @@ function App() {
     handleFilterMenuClose();
   };
 
+  // Check if a filter is active
+  const isFilterActive = searchQuery || filterPriority !== "All";
+
   return (
-    <div className="p-4 sm:p-6 md:p-8 lg:p-10">
+    <div className=" sm:p-6 md:p-8 lg:p-10">
       <h1 className="text-xl sm:text-2xl md:text-3xl flex font-bold text-center mb-4">Task List</h1>
 
       {/* Random Quote */}
@@ -174,6 +178,27 @@ function App() {
         </Menu>
       </div>
 
+      {/* Filter Indicator */}
+      {isFilterActive && (
+        <div className="text-sm text-gray-600 item-center mb-4">
+          <strong>Filter Applied:</strong>
+          {searchQuery && (
+            <Chip
+              label={`Search: "${searchQuery}"`}
+              onDelete={() => setSearchQuery("")}
+              sx={{ margin: '4px' }}
+            />
+          )}
+          {filterPriority !== "All" && (
+            <Chip
+              label={`Priority: ${filterPriority}`}
+              onDelete={() => setFilterPriority("All")}
+              sx={{ margin: '4px' }}
+            />
+          )}
+        </div>
+      )}
+
       {/* Pop-up Dialog */}
       <Dialog open={open} onClose={handleClose}>
         <div
@@ -238,57 +263,65 @@ function App() {
 
       {/* Display the list of tasks */}
       <ul className="mt-4 w-full flex flex-col">
-        {filteredTasks.map((task, index) => (
-          <li
-            className="w-full px-6 py-4 flex justify-between bg-white border border-gray-200 shadow rounded-lg mb-4"
-            key={index}
-            style={{
-              backgroundColor: task.checked ? '#f3f4f6' : '#ffffff',
-            }}
-          >
-            <div className="flex w-full">
-              <Checkbox
-                checked={task.checked}
-                onChange={() => toggleCheckbox(index)}
-                color="primary"
-              />
-              <div className="flex flex-col justify-start gap-1 items-start w-full">
-                <p
-                  style={{
-                    textDecoration: task.checked ? 'line-through' : 'none',
-                    color: task.checked ? '#888' : '#000',
-                  }}
-                >
-                  {task.name}
-                </p>
-                {task.priority === "High" && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    {task.priority}
-                  </span>
-                )}
-                {task.priority === "Medium" && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                    {task.priority}
-                  </span>
-                )}
-                {task.priority === "Low" && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {task.priority}
-                  </span>
-                )}
+        {filteredTasks.length > 0 ? (
+          filteredTasks.map((task, index) => (
+            <li
+              className="w-full px-6 py-4 flex justify-between bg-white border border-gray-200 shadow rounded-lg mb-4"
+              key={index}
+              style={{
+                backgroundColor: task.checked ? '#f3f4f6' : '#ffffff',
+              }}
+            >
+              <div className="flex w-full">
+                <Checkbox
+                  checked={task.checked}
+                  onChange={() => toggleCheckbox(index)}
+                  color="primary"
+                />
+                <div className="flex flex-col justify-start gap-1 items-start w-full">
+                  <p
+                    style={{
+                      textDecoration: task.checked ? 'line-through' : 'none',
+                      color: task.checked ? '#888' : '#000',
+                    }}
+                  >
+                    {task.name}
+                  </p>
+                  {task.priority === "High" && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      {task.priority}
+                    </span>
+                  )}
+                  {task.priority === "Medium" && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      {task.priority}
+                    </span>
+                  )}
+                  {task.priority === "Low" && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      {task.priority}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-            <div>
-              <IconButton
-                onClick={() => deleteTask(index)}
-                color="error"
-                aria-label="delete"
-              >
-                <DeleteIcon />
-              </IconButton>
-            </div>
-          </li>
-        ))}
+              <div>
+                <IconButton
+                  onClick={() => deleteTask(index)}
+                  color="error"
+                  aria-label="delete"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </div>
+            </li>
+          ))
+        ) : (
+          <div className="text-gray-600 text-center">
+            {isFilterActive
+              ? "No tasks match the current filter."
+              : "No tasks available. Add a new task!"}
+          </div>
+        )}
       </ul>
     </div>
   );
