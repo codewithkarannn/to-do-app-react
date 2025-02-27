@@ -1,14 +1,22 @@
 import { useState } from 'react';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import Checkbox from '@mui/material/Checkbox';
-import LinearProgress from '@mui/material/LinearProgress';
-import IconButton from '@mui/material/IconButton'; // Import IconButton
-import DeleteIcon from '@mui/icons-material/Delete'; // Import Delete icon
+import {
+  Button,
+  TextField,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Checkbox,
+  LinearProgress,
+  IconButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Menu,
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import FilterListIcon from '@mui/icons-material/FilterList'; // Import FilterListIcon
 import './App.css';
 
 function App() {
@@ -16,6 +24,9 @@ function App() {
   const [taskInput, setTaskInput] = useState("");
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [priority, setPriority] = useState("Medium"); // State for priority
+  const [filterPriority, setFilterPriority] = useState("All"); // State for filter priority
+  const [anchorEl, setAnchorEl] = useState(null); // State for filter menu anchor
 
   const quotes = [
     "The best way to get started is to quit talking and begin doing. – Walt Disney",
@@ -43,8 +54,9 @@ function App() {
 
   const addTask = () => {
     if (taskInput.trim() !== "") {
-      setTasks([...tasks, { name: taskInput, checked: false }]);
+      setTasks([...tasks, { name: taskInput, checked: false, priority }]);
       setTaskInput("");
+      setPriority("Medium"); // Reset priority to default
       handleClose();
       setCurrentQuote(getRandomQuote());
     }
@@ -67,38 +79,37 @@ function App() {
   const totalTasks = tasks.length;
   const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  const filteredTasks = tasks.filter((task) =>
-    task.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter tasks based on search query and selected priority
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch = task.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPriority = filterPriority === "All" || task.priority === filterPriority;
+    return matchesSearch && matchesPriority;
+  });
+
+  // Handle filter menu open
+  const handleFilterMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // Handle filter menu close
+  const handleFilterMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  // Handle filter priority change
+  const handleFilterPriorityChange = (priority) => {
+    setFilterPriority(priority);
+    handleFilterMenuClose();
+  };
 
   return (
     <div className="p-4 sm:p-6 md:p-8 lg:p-10">
-      <h1 className="text-xl sm:text-2xl md:text-3xl flex font-bold  mb-4">Task List</h1>
+      <h1 className="text-xl sm:text-2xl md:text-3xl flex font-bold text-center mb-4">Task List</h1>
 
       {/* Random Quote */}
       <div className="text-sm sm:text-base text-gray-600 flex italic text-center mb-4">
         "{currentQuote}"
       </div>
-
-      {/* Search Bar */}
-      {/* <div className="w-full flex  mb-4">
-        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{
-              backgroundColor: '#ffffff',
-              borderRadius: '4px',
-              '& .MuiOutlinedInput-root': {
-                height: '48px',
-              },
-            }}
-          />
-        </div>
-      </div> */}
 
       {/* Progress Bar */}
       <div className="w-full mt-4">
@@ -114,21 +125,20 @@ function App() {
             },
           }}
         />
-        <div className="text-sm text-gray-600 mt-1 flex text-center">
+        <div className="text-sm text-gray-600 flex mt-1 text-center">
           {progress}% completed ({completedTasks}/{totalTasks} tasks)
         </div>
       </div>
 
-      {/* Add Task Button */}
-      <div className="w-full mb-4 mt-8">
+      {/* Add Task Button and Filter Icon Button */}
+      <div className="w-full mb-4 mt-8 flex justify-between">
         <Button
           variant="contained"
           onClick={handleClickOpen}
-          fullWidth
           sx={{
             backgroundColor: '#1f2937',
             color: 'white',
-            padding: '10px 0',
+            padding: '10px 20px',
             fontSize: '12px',
             '&:hover': {
               backgroundColor: '#374151',
@@ -137,12 +147,46 @@ function App() {
         >
           + Add New Task
         </Button>
+        {/* Filter Icon Button */}
+        <IconButton
+          aria-label="filter"
+          onClick={handleFilterMenuOpen}
+          sx={{
+            backgroundColor: '#1f2937',
+            color: 'white',
+            '&:hover': {
+              backgroundColor: '#374151',
+            },
+          }}
+        >
+          <FilterListIcon />
+        </IconButton>
+        {/* Filter Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleFilterMenuClose}
+        >
+          <MenuItem onClick={() => handleFilterPriorityChange("All")}>All</MenuItem>
+          <MenuItem onClick={() => handleFilterPriorityChange("High")}>High</MenuItem>
+          <MenuItem onClick={() => handleFilterPriorityChange("Medium")}>Medium</MenuItem>
+          <MenuItem onClick={() => handleFilterPriorityChange("Low")}>Low</MenuItem>
+        </Menu>
       </div>
 
       {/* Pop-up Dialog */}
       <Dialog open={open} onClose={handleClose}>
-        <div className="px-2 py-4 min-w-120">
-          <DialogTitle>Add a New Task</DialogTitle>
+        <div
+          className="px-2 py-4"
+          style={{
+            width: '100%',
+            maxWidth: '370px',
+            margin: '0 auto',
+          }}
+        >
+          <DialogTitle>
+            <span className="text-base font-semibold">Add a New Task</span>
+          </DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
@@ -154,7 +198,20 @@ function App() {
               value={taskInput}
               onChange={(e) => setTaskInput(e.target.value)}
               placeholder="Enter the task"
+              sx={{ mb: 2 }} // Add margin bottom
             />
+            <FormControl fullWidth>
+              <InputLabel>Priority</InputLabel>
+              <Select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                label="Priority"
+              >
+                <MenuItem value="Low">Low</MenuItem>
+                <MenuItem value="Medium">Medium</MenuItem>
+                <MenuItem value="High">High</MenuItem>
+              </Select>
+            </FormControl>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose} color="error">
@@ -166,7 +223,7 @@ function App() {
               sx={{
                 backgroundColor: '#1f2937',
                 color: 'white',
-                padding: '10px 0',
+                padding: '10px 20px',
                 fontSize: '12px',
                 '&:hover': {
                   backgroundColor: '#374151',
@@ -180,7 +237,7 @@ function App() {
       </Dialog>
 
       {/* Display the list of tasks */}
-      <ul className="mt-4 w-full flex flex-col items-center">
+      <ul className="mt-4 w-full flex flex-col">
         {filteredTasks.map((task, index) => (
           <li
             className="w-full px-6 py-4 flex justify-between bg-white border border-gray-200 shadow rounded-lg mb-4"
@@ -189,24 +246,39 @@ function App() {
               backgroundColor: task.checked ? '#f3f4f6' : '#ffffff',
             }}
           >
-            <div className="flex items-center">
+            <div className="flex w-full">
               <Checkbox
                 checked={task.checked}
                 onChange={() => toggleCheckbox(index)}
                 color="primary"
               />
-              <span
-                style={{
-                  textDecoration: task.checked ? 'line-through' : 'none',
-                  color: task.checked ? '#888' : '#000',
-                  marginLeft: '8px',
-                }}
-              >
-                {task.name}
-              </span>
+              <div className="flex flex-col justify-start gap-1 items-start w-full">
+                <p
+                  style={{
+                    textDecoration: task.checked ? 'line-through' : 'none',
+                    color: task.checked ? '#888' : '#000',
+                  }}
+                >
+                  {task.name}
+                </p>
+                {task.priority === "High" && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    {task.priority}
+                  </span>
+                )}
+                {task.priority === "Medium" && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    {task.priority}
+                  </span>
+                )}
+                {task.priority === "Low" && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {task.priority}
+                  </span>
+                )}
+              </div>
             </div>
             <div>
-              {/* Replace Delete Button with Delete Icon */}
               <IconButton
                 onClick={() => deleteTask(index)}
                 color="error"
